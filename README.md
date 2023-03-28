@@ -1,4 +1,4 @@
-# Notebook-Churn-Prediction
+# Notebook Churn Prediction
 
 Notebook where I identify whether a costumer will churn or not (leave their energy company provider) based on data and historic data.
 
