@@ -1,0 +1,191 @@
+
+
+0) Intro
+
+Hi, my name is Pablo Roldán and today I'll guide you through the Data Analysis I have done on the CHURN Ml case for Energy Inc
+
+
+
+1) What is the task?
+
+So, first of all, what do we have to do?
+
+We want to know if a costumer will change his company provider from EnergyInc to a different one over the next 3 months.
+
+Additionally, we would like to know if offering them a 20% discount is a good measure to prevent them from leaving or not
+
+
+In order to solve this issue we will use a predictive model that will learn from our costumer data and classify them on the likelyness of them leaving
+
+
+
+2) Our data
+
+
+So first lets talk about our data.
+
+Our current Churn rate looks like this, so, in the worst case scenario, if our model predicts that all of them will stay, we would get an accuracy of 90.15
+
+Here we have our costumer data that looks very standard, with just some ids and features 
+
+But the interesting one is the historic customer data, since for 1 id we have 12 different rows, 1 for each month
+
+
+And that raises the question, how do we merge this data?
+
+
+2) Megring data
+
+To merge the data I came up with 2 solutions since we only want one costumer id, not 12
+
+For both solutions, what we will do is put the date column as a row so we can keep track of the months looking at the columns instead of looking at the rows
+
+
+
+Here, the overkill solution is pretty self explanatory, I added a prefix to the column name corresponding to its month for each of the columns
+
+
+For the price aggregation I did the same thing, but I merged all the values of each period together beforehand so that we would have less columns. I did this by adding them and using different coeficients depending on the column that they came from
+
+
+
+3) Cleaning data
+
+Once that is done, we need to clean and fill our data since we have a lot of missing values
+
+As it is shown in this graph on the left, we even have 7 features with m ore than 50% of values missing, with one column that is actually completely empty
+
+To solve this issue I just get all those 7 features out of the data, but were they relevant?
+
+To know how important they were, we can look at these pie charts that represent the distribution of the churn rate for the missing and not missing values of 2 of these features
+
+Looking at the "company category" for example we would say they weren't relevant, since the churn distribution is almost identical to the global one. But looking at the "date of first contract of the client" we could say non missing values matter since they have 50% more churn rate
+
+
+In handsight, I would say that I could have at least labelled them with a 0 if they were missing and a 1 if they weren't
+
+The main reason I didn't do this is because of time constraints on the project, since I actually did that for other features
+
+ 
+
+5) Fill missing values
+
+So now we should take a more in depth look at the data to decide how to fill all the missing values.
+
+To do so I took a look to the correlation matrix, since if the correlation between those values is high, we could find a way to fill one with the other
+
+
+For the rest of the missing values, since they were very few, I took a look at them and decided what to do based on the other values of the same feature. Depending on that, they were either filled with zeros, the mean or a default string
+
+In case there were any remaining missing values, I decided to fill them with the mode, since that way I wouldn't have any problem even if they weren't numerical and were categorical
+
+
+
+6) Exploratory Data Analysis
+
+After that I did the Exploratory Data Analysis
+
+Here on the left for example we have our categorical data. We only have those 2 because features that were binary data were labelled as 0 or 1 and the dates were changed to its timestamp
+
+
+With these histograms on the right I found out about things like the "contract last modification date" having almost all its values to the right, which makes sense as it gets updated over time. Or that some of the features look like an exponential distribution rather than a Gaussian one
+
+
+Remark that these results are the ones that don't show the outliers becauseI took care of them
+
+
+
+7) Outliers
+
+So, what did I do to treat them?
+
+
+Firstly, for the exponential looking data that didn't have too many values less or equal than zero, I liniearized them using a log, and for those values that were less or equal than zero I filled them with the median of the new Gaussian distribution created with them.
+
+
+And for the rest of the numerical data, with the new exponential data included, I assigned the outliers to the minimum and maximum data values respectively as we can see on the image on the right
+
+I did this instead of just scrapping them off as they might be relevant for the model
+
+
+
+8) Modelling
+
+With our data fully preprocessed we are ready to try diffferent classifier models to start predicting
+
+
+Here we have the different Confusion matrices that came out of each model.
+A Confusion matrix, as we can see on the top right corner, is a matrix that represents the true negatives, true positives, false negatives and false positives of the predicted results given by the model. Our goal is to maximize the amount of true positives and negatives and minimize the amount of false ones
+
+Here, looking at all of them, it is very clear that the best model is the random forest since it has the most true negatives and it's the only one that has less false positives than true positives.
+It is true that if we didn't care about having false positives, I would consider the KNN algorithm too, but that's not the case since that would mean handling free 20% discounts to people that weren't going to leave
+
+
+Now Im going to give a brief explanation of each model
+
+So starting with the top left, the logistic regression model estimates the probability of being churned based on a given dataset of independent variables. It applies a logit transformation on the odds.
+
+Continuing with the KNN model or k-nearest neighbors, it's a model that classifies its elements by its neighbors casting a vote of where should that element belong based on distance
+
+Following that, we have the Decision Tree Classifier, where the nodes represent "tests" on features, the branches represent the outcome of those tests, and the leaves represent a class label, in this case, if the client will churn or not. It is similar to videogames with multiple endings
+
+And finally we have the Random Forest, which basically combines the output of multiple decision tress such as the ones I just explained, and combines their outputs into a single result
+
+
+Also, all the results that I will show from now on will be based on the random forest model, since it was the best out of all of them in multiple metrics
+
+
+
+9) Metrics
+
+And talking about that, we have the ROC Curve and the Brier score
+
+
+The ROC Curve isn't really a metric by itself, the metric it's the area under the curve called ROC AUC.
+
+It is used to represent how well we can distinguish between 2 classes, in this case if the costumer will or will not churn. We could say its the probability of clasiffying a random positive element higher than a random negative element 
+
+Basically, the more false positives you have, the more the curve goes to the right making the area smaller, and the more true positives you have, the more the curve goes higher, making the area bigger
+
+The main issue I have with it, is that it only cares about the positives and not the negatives, focusing too much on one end of the results
+
+
+We also have the Brier score displayed here on the right. It doesn't have any fancy graphs, but I personally prefer it as a metric over the Roc Curve.
+
+This is because simalarly to the log loss, it represents how far off our predictions are from the real thing, where the lower the value is, the better our prediction is too.
+
+
+And while I have to say that our ROC AUC result is just good, our Brier score is excelent, since the value ranges from 0 to 1 and we have a very low value
+
+
+
+10) Predicted test
+
+And here we finally have our predicted test.
+
+If we take a closer look at it we can see that I decided to put the threshold of a costumer churning in 0.4 rather than the standard 0.5 since it got me sligtly better results
+
+
+
+11) 20% discount measure
+
+Finally, to check if the 20% discount meassure was good or bad, I decided to plot a graph that describes the importance of each feature in our Random Forest classifier model
+
+Here we can see that 2 out of the top 5 most relevant features are not money/consumption related, so maybe there are better solutions to solve the churn issue than just money. In this case those variables are "contract_end_date" and "contract_activation_date", so two good solutions could be to offer easier ways to extend your contract and also add incentives to costumers for getting people in, since it is very likely that you won't leave if you have just started your contract
+
+
+
+12) Conclusion
+
+In conclusion, looking at the different metrics we have analyzed like the ROC Curve or the Brier score, our model is good enough to correctly analyze and predict the mayority of cases without error
+
+Further improvements on the model would include casting the historical data in a manner that it is more relevant to the result since we ended up not using it because it didn't improve the model, but common sense, says it should; also, as I mentioned before, find a better way to treat the missing values in those features that had more than 50% of their values missing; in addition to that, we could also fine tune the model a bit more; and also find a way to determine precisely if the 20% discount would be effective or not
+
+
+13) End
+
+Thank you so much for your attention and if you have any questions, feel free to ask them.
+
+
+
+
